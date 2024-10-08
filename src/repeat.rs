@@ -14,6 +14,12 @@ pub enum Repeat {
     DaysOfWeek(Vec<DayOfWeek>),
 }
 
+impl Default for Repeat {
+    fn default() -> Self {
+        Self::Never
+    }
+}
+
 impl Repeat {
     pub fn parse_from_str(s: &str) -> Result<Repeat> {
         match s.to_lowercase().as_str() {

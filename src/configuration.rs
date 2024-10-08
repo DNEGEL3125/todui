@@ -188,6 +188,15 @@ where
     let key = KeyBindings::key_to_str(key);
     key.serialize(serializer)
 }
+
+fn left() -> KeyCode {
+    KeyCode::Left
+}
+
+fn right() -> KeyCode {
+    KeyCode::Right
+}
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct KeyBindings {
     #[serde(deserialize_with = "deserialize_key", serialize_with = "serialize_key")]
@@ -196,6 +205,18 @@ pub struct KeyBindings {
     pub down: KeyCode,
     #[serde(deserialize_with = "deserialize_key", serialize_with = "serialize_key")]
     pub up: KeyCode,
+    #[serde(
+        deserialize_with = "deserialize_key",
+        serialize_with = "serialize_key",
+        default = "left"
+    )]
+    pub left: KeyCode,
+    #[serde(
+        deserialize_with = "deserialize_key",
+        serialize_with = "serialize_key",
+        default = "right"
+    )]
+    pub right: KeyCode,
     #[serde(deserialize_with = "deserialize_key", serialize_with = "serialize_key")]
     pub complete_task: KeyCode,
     #[serde(deserialize_with = "deserialize_key", serialize_with = "serialize_key")]
@@ -262,6 +283,8 @@ impl KeyBindings {
             quit: KeyCode::Char('q'),
             down: KeyCode::Char('j'),
             up: KeyCode::Char('k'),
+            left: KeyCode::Char('h'),
+            right: KeyCode::Char('l'),
             complete_task: KeyCode::Char(' '),
             toggle_completed_tasks: KeyCode::Char('c'),
             delete_task: KeyCode::Char('d'),
@@ -284,6 +307,8 @@ impl Default for KeyBindings {
             quit: KeyCode::Char('q'),
             down: KeyCode::Down,
             up: KeyCode::Up,
+            left: KeyCode::Left,
+            right: KeyCode::Right,
             complete_task: KeyCode::Char(' '),
             toggle_completed_tasks: KeyCode::Char('h'),
             delete_task: KeyCode::Delete,

@@ -8,16 +8,13 @@ use tui::{
     widgets::{Block, BorderType, Borders, Paragraph, Wrap},
     Frame,
 };
-use unicode_width::UnicodeWidthStr;
 
 use super::{InputMode, Page};
 
 pub struct TaskPage {
-    pub task_form: TaskForm,
+    task_form: TaskForm,
     pub input_mode: InputMode,
     pub editing_task: Option<usize>,
-    pub current_idx: usize,
-    pub num_fields: usize,
     pub error: Option<String>,
     pub app: Rc<RefCell<App>>,
 }
@@ -27,9 +24,7 @@ impl TaskPage {
         TaskPage {
             task_form: TaskForm::default(),
             input_mode: InputMode::Normal,
-            current_idx: 0,
             error: None,
-            num_fields: 6,
             editing_task: None,
             app,
         }
@@ -42,48 +37,30 @@ impl TaskPage {
         TaskPage {
             task_form,
             input_mode: InputMode::Normal,
-            current_idx: 0,
             error: None,
-            num_fields: 6,
             editing_task: Some(task_id),
             app,
         }
     }
 
-    pub fn next_field(&mut self) {
-        if self.current_idx < self.num_fields - 1 {
-            self.current_idx += 1;
-        }
-    }
-
-    pub fn prev_field(&mut self) {
-        if self.current_idx > 0 {
-            self.current_idx -= 1;
-        }
-    }
-
     pub fn add_char(&mut self, c: char) {
-        match self.current_idx {
-            0 => self.task_form.name.push(c),
-            1 => self.task_form.date.push(c),
-            2 => self.task_form.repeats.push(c),
-            3 => self.task_form.group.push(c),
-            4 => self.task_form.description.push(c),
-            5 => self.task_form.url.push(c),
-            _ => {}
-        };
+        self.task_form.add_char(c);
     }
 
     pub fn remove_char(&mut self) {
-        match self.current_idx {
-            0 => self.task_form.name.pop(),
-            1 => self.task_form.date.pop(),
-            2 => self.task_form.repeats.pop(),
-            3 => self.task_form.group.pop(),
-            4 => self.task_form.description.pop(),
-            5 => self.task_form.url.pop(),
-            _ => None,
-        };
+        self.task_form.remove_char();
+    }
+
+    pub fn next_field(&mut self) {
+        self.task_form.next_field();
+    }
+
+    pub fn prev_field(&mut self) {
+        self.task_form.prev_field();
+    }
+
+    pub fn move_cursor(&mut self, diff: isize) {
+        self.task_form.move_cursor(diff);
     }
 
     pub fn submit(&mut self) -> bool {
@@ -106,7 +83,7 @@ impl TaskPage {
     }
 
     fn border_style(&self, idx: usize) -> Style {
-        if self.current_idx == idx && self.input_mode == InputMode::Insert {
+        if self.task_form.current_field_index() == idx && self.input_mode == InputMode::Insert {
             Style::default().fg(self.get_primary_color())
         } else {
             Style::default()
@@ -216,14 +193,14 @@ where
         f.render_widget(keybinds, chunks[0]);
 
         // Name
-        let curr_text = self.task_form.name.clone();
+        let curr_text = self.task_form.name().clone();
         let input = Paragraph::new(curr_text.as_ref())
             .style(self.border_style(0))
             .block(Block::default().borders(Borders::ALL).title("Name (*)"));
         f.render_widget(input, chunks[1]);
 
         // Date
-        let curr_text = self.task_form.date.clone();
+        let curr_text = self.task_form.date().clone();
         let input = Paragraph::new(curr_text.as_ref())
             .style(self.border_style(1))
             .block(
@@ -234,7 +211,7 @@ where
         f.render_widget(input, chunks[2]);
 
         // Repeats
-        let curr_text = self.task_form.repeats.to_string();
+        let curr_text = self.task_form.repeats().clone();
         let input = Paragraph::new(curr_text.as_ref())
             .style(self.border_style(2))
             .block(Block::default().borders(Borders::ALL).title(
@@ -243,55 +220,34 @@ where
         f.render_widget(input, chunks[3]);
 
         // Group
-        let curr_text = self.task_form.group.to_string();
+        let curr_text = self.task_form.group().clone();
         let input = Paragraph::new(curr_text.as_ref())
             .style(self.border_style(3))
             .block(Block::default().borders(Borders::ALL).title("Group"));
         f.render_widget(input, chunks[4]);
 
         // Description
-        let curr_text = self.task_form.description.clone();
+        let curr_text = self.task_form.description().clone();
         let input = Paragraph::new(curr_text.as_ref())
             .style(self.border_style(4))
             .block(Block::default().borders(Borders::ALL).title("Description"));
         f.render_widget(input, chunks[5]);
 
         // Description
-        let curr_text = self.task_form.url.clone();
+        let curr_text = self.task_form.url().clone();
         let input = Paragraph::new(curr_text.as_ref())
             .style(self.border_style(5))
             .block(Block::default().borders(Borders::ALL).title("URL"));
         f.render_widget(input, chunks[6]);
 
+        let current_field_index = self.task_form.current_field_index();
+
         // Place cursor
         if focused {
-            match self.current_idx {
-                0 => f.set_cursor(
-                    chunks[1].x + self.task_form.name.width() as u16 + 1,
-                    chunks[1].y + 1,
-                ),
-                1 => f.set_cursor(
-                    chunks[2].x + self.task_form.date.width() as u16 + 1,
-                    chunks[2].y + 1,
-                ),
-                2 => f.set_cursor(
-                    chunks[3].x + self.task_form.repeats.width() as u16 + 1,
-                    chunks[3].y + 1,
-                ),
-                3 => f.set_cursor(
-                    chunks[4].x + self.task_form.group.width() as u16 + 1,
-                    chunks[4].y + 1,
-                ),
-                4 => f.set_cursor(
-                    chunks[5].x + self.task_form.description.width() as u16 + 1,
-                    chunks[5].y + 1,
-                ),
-                5 => f.set_cursor(
-                    chunks[6].x + self.task_form.url.width() as u16 + 1,
-                    chunks[6].y + 1,
-                ),
-                _ => {}
-            }
+            f.set_cursor(
+                chunks[current_field_index + 1].x + 1 + self.task_form.cursor_pos() as u16,
+                chunks[current_field_index + 1].y + 1,
+            );
         }
 
         // Error message

@@ -194,6 +194,12 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: App) -> Result<()> {
                                 current_page = UIPage::AllTasks;
                             }
                         }
+                        _ if code == keybindings.left => {
+                            task_page.move_cursor(-1);
+                        }
+                        _ if code == keybindings.right => {
+                            task_page.move_cursor(1);
+                        }
                         _ => {}
                     },
                     InputMode::Insert => match key.code {
@@ -206,6 +212,12 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: App) -> Result<()> {
                                 all_tasks_page.ensure_task_exists();
                                 current_page = UIPage::AllTasks;
                             }
+                        }
+                        _ if code == keybindings.left => {
+                            task_page.move_cursor(-1);
+                        }
+                        _ if code == keybindings.right => {
+                            task_page.move_cursor(1);
                         }
                         KeyCode::Char(c) => task_page.add_char(c),
                         KeyCode::Backspace => task_page.remove_char(),

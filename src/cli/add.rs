@@ -4,7 +4,8 @@ use clap::Parser;
 use crate::app::App;
 use crate::cli::cli_utils;
 use crate::cli::formats::Format;
-use crate::task_form::TaskForm;
+use crate::task::Task;
+use crate::{repeat, utils};
 
 #[derive(Parser)]
 pub struct Args {
@@ -41,17 +42,18 @@ pub fn run(mut app: App, args: Args) -> Result<()> {
         url,
     } = args;
 
-    let mut task_form = TaskForm {
-        id: None,
-        name,
-        date: date.unwrap_or("".to_string()),
-        repeats: repeats.unwrap_or("".to_string()),
-        group: group.unwrap_or("".to_string()),
-        description: description.unwrap_or("".to_string()),
-        url: url.unwrap_or("".to_string()),
-    };
+    let mut task = Task::default();
+    task.set_name(name);
+    let date =
+        utils::parse_date(&date.unwrap_or_default(), &app.settings).unwrap_or(utils::get_today());
+    task.set_date(date);
+    task.set_repeats(
+        repeat::Repeat::parse_from_str(&repeats.unwrap_or_default()).unwrap_or_default(),
+    );
+    task.set_group(group.unwrap_or_default());
+    task.set_description(description.unwrap_or_default());
+    task.set_url(url.unwrap_or_default());
 
-    let task = task_form.submit(&app.settings)?;
     let id = app.add_task(task);
     let task = app.get_task(id).unwrap();
     cli_utils::print_task(task, format, &app.settings);
