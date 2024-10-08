@@ -7,7 +7,7 @@ https://user-images.githubusercontent.com/24496843/225743483-2cbbcdda-9957-4c01-
 
 ## Features
 
-This app allows for almost anythig you would need when dealing with todos:
+This app allows for almost anything you would need when dealing with todos:
 - Create, edit, and delete tasks
 - Add links to tasks
 - Add due dates to tasks
